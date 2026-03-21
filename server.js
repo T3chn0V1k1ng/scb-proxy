@@ -1,31 +1,19 @@
-const express = require("express");
+app.post("/scb/companies", async (req, res) => {
+  try {
+    const response = await fetch(
+      "https://api.scb.se/OV0104/v1/doris/en/ssd/BE/BE0101/BE0101A/Foretagsregister"
+    );
 
-const app = express();
-app.use(express.json());
+    const data = await response.json();
 
-// ✅ Health check
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", time: new Date() });
-});
+    res.json({
+      success: true,
+      source: "SCB",
+      data: data
+    });
 
-// root
-app.get("/", (req, res) => {
-  res.send("Proxy is alive 🚀");
-});
-
-// 🔥 Debug route
-app.post("/scb/companies", (req, res) => {
-  console.log("Incoming request:", req.body);
-
-  res.json({
-    success: true,
-    path: "companies",
-    received: req.body
-  });
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Running on port ${PORT}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "SCB fetch failed" });
+  }
 });
