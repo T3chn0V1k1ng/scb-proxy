@@ -3,25 +3,25 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("SCB Proxy is running 🚀");
+// ✅ Health check
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", time: new Date() });
 });
 
-// 🔥 DYNAMISK ROUTE
-app.post("/scb/*", async (req, res) => {
-  try {
-    const path = req.params[0]; // fångar "companies"
+// root
+app.get("/", (req, res) => {
+  res.send("Proxy is alive 🚀");
+});
 
-    res.json({
-      success: true,
-      path: path,
-      message: "Dynamic proxy works",
-      received: req.body
-    });
+// 🔥 Debug route
+app.post("/scb/companies", (req, res) => {
+  console.log("Incoming request:", req.body);
 
-  } catch (err) {
-    res.status(500).json({ error: "Proxy failed" });
-  }
+  res.json({
+    success: true,
+    path: "companies",
+    received: req.body
+  });
 });
 
 const PORT = process.env.PORT || 3000;
