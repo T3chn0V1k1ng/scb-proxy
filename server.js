@@ -1,21 +1,13 @@
-import express from "express";
+const express = require("express");
 
-const app = express(); // 
+const app = express();
 
-app.use(express.json());
-
-// Test route
 app.get("/", (req, res) => {
-  res.send("SCB Proxy is running 🚀");
-});
-
-// SCB endpoint (placeholder just nu)
-app.post("/scb", (req, res) => {
-  res.json({ message: "SCB proxy endpoint working" });
+  res.send("Proxy is alive 🚀");
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Proxy running on port ${PORT}`);
+  console.log(`Running on port ${PORT}`);
 });
