@@ -1,3 +1,19 @@
+const express = require("express");
+
+const app = express();
+app.use(express.json());
+
+// Health check
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", time: new Date() });
+});
+
+// Root
+app.get("/", (req, res) => {
+  res.send("SCB Proxy is running 🚀");
+});
+
+// 🔥 SCB ROUTE (nu korrekt)
 app.post("/scb/companies", async (req, res) => {
   try {
     const response = await fetch(
@@ -13,7 +29,13 @@ app.post("/scb/companies", async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("SCB error:", err);
     res.status(500).json({ error: "SCB fetch failed" });
   }
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Running on port ${PORT}`);
 });
