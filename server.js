@@ -3,28 +3,39 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
-// ✅ Health check
+// Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok", time: new Date() });
 });
 
-// Root endpoint
+// Root
 app.get("/", (req, res) => {
   res.send("SCB Proxy is running 🚀");
 });
 
-// 🔥 TEMP: Hämta SCB variabler (metadata)
+// 🔥 SCB metadata (robust version – fixar Bad Request + debug)
 app.get("/scb/companies", async (req, res) => {
   try {
     const response = await fetch(
       "https://api.scb.se/OV0104/v1/doris/en/ssd/NV/NV0109/NV0109A/ForetagsregisterSNI2007"
     );
 
-    const data = await response.json();
+    const text = await response.text();
+
+    console.log("📥 SCB raw response:", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return res.status(500).json({
+        error: "SCB returned non-JSON",
+        raw: text
+      });
+    }
 
     res.json({
       success: true,
-      source: "SCB metadata",
       data: data
     });
 
