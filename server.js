@@ -13,16 +13,46 @@ app.get("/", (req, res) => {
   res.send("SCB Proxy is running 🚀");
 });
 
-// 🔥 SCB metadata (robust version – fixar Bad Request + debug)
-app.get("/scb/companies", async (req, res) => {
+// 🔥 SCB DATA (KORREKT POST)
+app.post("/scb/companies", async (req, res) => {
   try {
+    const payload = {
+      query: [
+        {
+          code: "Region",
+          selection: {
+            filter: "all",
+            values: ["*"]
+          }
+        },
+        {
+          code: "Tid",
+          selection: {
+            filter: "top",
+            values: ["1"] // senaste året
+          }
+        }
+      ],
+      response: {
+        format: "json"
+      }
+    };
+
+    console.log("📤 Payload:", JSON.stringify(payload));
+
     const response = await fetch(
-      "https://api.scb.se/OV0104/v1/doris/en/ssd/NV/NV0109/NV0109A/ForetagsregisterSNI2007"
+      "https://api.scb.se/OV0104/v1/doris/en/ssd/NV/NV0109/NV0109A/ForetagsregisterSNI2007",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      }
     );
 
     const text = await response.text();
-
-    console.log("📥 SCB raw response:", text);
+    console.log("📥 SCB raw:", text);
 
     let data;
     try {
@@ -40,9 +70,9 @@ app.get("/scb/companies", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("SCB meta error:", err);
+    console.error("SCB error:", err);
     res.status(500).json({
-      error: "SCB meta fetch failed",
+      error: "SCB fetch failed",
       details: err.message
     });
   }
