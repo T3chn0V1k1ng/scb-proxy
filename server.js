@@ -13,37 +13,25 @@ app.get("/", (req, res) => {
   res.send("SCB Proxy is running 🚀");
 });
 
-// 🔥 SCB (open API – utan cert)
-app.post("/scb/companies", async (req, res) => {
+// 🔥 TEMP: Hämta SCB variabler (metadata)
+app.get("/scb/companies", async (req, res) => {
   try {
     const response = await fetch(
-      "https://api.scb.se/OV0104/v1/doris/en/ssd/NV/NV0109/NV0109A/ForetagsregisterSNI2007",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          query: [],
-          response: {
-            format: "json"
-          }
-        })
-      }
+      "https://api.scb.se/OV0104/v1/doris/en/ssd/NV/NV0109/NV0109A/ForetagsregisterSNI2007"
     );
 
     const data = await response.json();
 
     res.json({
       success: true,
-      source: "SCB",
+      source: "SCB metadata",
       data: data
     });
 
   } catch (err) {
-    console.error("SCB error:", err);
+    console.error("SCB meta error:", err);
     res.status(500).json({
-      error: "SCB fetch failed",
+      error: "SCB meta fetch failed",
       details: err.message
     });
   }
