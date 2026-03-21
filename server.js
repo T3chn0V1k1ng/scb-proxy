@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 app.post("/scb/companies", async (req, res) => {
   try {
     const response = await fetch(
-      "https://api.scb.se/OV0104/v1/doris/en/ssd/BE/BE0101/BE0101A/Foretagsregister",
+      "https://api.scb.se/OV0104/v1/doris/en/ssd/NV/NV0109/NV0109A/ForetagsregisterSNI2007",
       {
         method: "POST",
         headers: {
