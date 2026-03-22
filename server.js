@@ -10,34 +10,41 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", time: new Date() });
 });
 
-// ✅ Root
-app.get("/", (req, res) => {
-  res.send("SCB Proxy running 🚀");
-});
-
-// 🔥 SCB – Kategorier
-app.get("/scb/kategorier", async (req, res) => {
+app.get("/scb/kategorier", (req, res) => {
   try {
     const pfx = fs.readFileSync("./cert.pfx");
 
-    const agent = new https.Agent({
-      pfx,
+    const options = {
+      hostname: "privateapi.scb.se",
+      port: 443,
+      path: "/nv0101/v1/sokpavar/api/je/koptakategorier",
+      method: "GET",
+      pfx: pfx,
       passphrase: process.env.SCB_CERT_PASSWORD
+    };
+
+    const request = https.request(options, (response) => {
+      let data = "";
+
+      response.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      response.on("end", () => {
+        console.log("📥 SCB response:", data);
+        res.send(data);
+      });
     });
 
-    const response = await fetch(
-      "https://privateapi.scb.se/nv0101/v1/sokpavar/api/je/koptakategorier",
-      { agent }
-    );
+    request.on("error", (error) => {
+      console.error("❌ HTTPS ERROR:", error);
+      res.status(500).json({ error: error.message });
+    });
 
-    const data = await response.text();
-
-    console.log("📥 kategorier:", data);
-
-    res.send(data);
+    request.end();
 
   } catch (err) {
-    console.error("❌ kategorier error:", err);
+    console.error("❌ SERVER ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
