@@ -10,6 +10,12 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", time: new Date() });
 });
 
+// ✅ Root
+app.get("/", (req, res) => {
+  res.send("SCB Proxy running 🚀");
+});
+
+// 🔥 SCB – Kategorier (mTLS)
 app.get("/scb/kategorier", (req, res) => {
   try {
     const pfx = fs.readFileSync("./cert.pfx");
@@ -31,7 +37,7 @@ app.get("/scb/kategorier", (req, res) => {
       });
 
       response.on("end", () => {
-        console.log("📥 SCB response:", data);
+        console.log("📥 kategorier:", data);
         res.send(data);
       });
     });
@@ -49,76 +55,131 @@ app.get("/scb/kategorier", (req, res) => {
   }
 });
 
-// 🔥 SCB – Variabler
-app.get("/scb/variabler", async (req, res) => {
+// 🔥 SCB – Variabler (mTLS via https.request)
+app.get("/scb/variabler", (req, res) => {
   try {
     const pfx = fs.readFileSync("./cert.pfx");
 
-    const agent = new https.Agent({
-      pfx,
+    const options = {
+      hostname: "privateapi.scb.se",
+      port: 443,
+      path: "/nv0101/v1/sokpavar/api/je/koptavariabler",
+      method: "GET",
+      pfx: pfx,
       passphrase: process.env.SCB_CERT_PASSWORD
+    };
+
+    const request = https.request(options, (response) => {
+      let data = "";
+
+      response.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      response.on("end", () => {
+        console.log("📥 variabler:", data);
+        res.send(data);
+      });
     });
 
-    const response = await fetch(
-      "https://privateapi.scb.se/nv0101/v1/sokpavar/api/je/koptavariabler",
-      { agent }
-    );
+    request.on("error", (error) => {
+      console.error("❌ variabler error:", error);
+      res.status(500).json({ error: error.message });
+    });
 
-    const data = await response.text();
-
-    console.log("📥 variabler:", data);
-
-    res.send(data);
+    request.end();
 
   } catch (err) {
-    console.error("❌ variabler error:", err);
+    console.error("❌ server error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 🔥 SCB – Companies (DEBUG)
-app.post("/scb/companies", async (req, res) => {
+// 🔥 SCB – Räkna företag (STEGET FÖRE HAMTA)
+app.post("/scb/rakna", (req, res) => {
   try {
     const pfx = fs.readFileSync("./cert.pfx");
 
-    const agent = new https.Agent({
-      pfx,
-      passphrase: process.env.SCB_CERT_PASSWORD
-    });
-
-    const payload = req.body || {};
-
-    console.log("📤 payload:", JSON.stringify(payload, null, 2));
-
-    const response = await fetch(
-      "https://privateapi.scb.se/nv0101/v1/sokpavar/api/je/hamtaforetag",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload),
-        agent
+    const options = {
+      hostname: "privateapi.scb.se",
+      port: 443,
+      path: "/nv0101/v1/sokpavar/api/je/raknaforetag",
+      method: "POST",
+      pfx: pfx,
+      passphrase: process.env.SCB_CERT_PASSWORD,
+      headers: {
+        "Content-Type": "application/json"
       }
-    );
+    };
 
-    const text = await response.text();
+    const request = https.request(options, (response) => {
+      let data = "";
 
-    console.log("📥 SCB response:", text);
-    console.log("📊 status:", response.status);
+      response.on("data", (chunk) => {
+        data += chunk;
+      });
 
-    res.status(response.status).send({
-      status: response.status,
-      raw: text
+      response.on("end", () => {
+        console.log("📥 rakna:", data);
+        res.send(data);
+      });
     });
+
+    request.on("error", (error) => {
+      console.error("❌ rakna error:", error);
+      res.status(500).json({ error: error.message });
+    });
+
+    request.write(JSON.stringify(req.body));
+    request.end();
 
   } catch (err) {
-    console.error("❌ SCB error:", err);
+    console.error("❌ server error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    res.status(500).json({
-      error: "SCB fetch failed",
-      details: err.message
+// 🔥 SCB – Hämta företag
+app.post("/scb/companies", (req, res) => {
+  try {
+    const pfx = fs.readFileSync("./cert.pfx");
+
+    const options = {
+      hostname: "privateapi.scb.se",
+      port: 443,
+      path: "/nv0101/v1/sokpavar/api/je/hamtaforetag",
+      method: "POST",
+      pfx: pfx,
+      passphrase: process.env.SCB_CERT_PASSWORD,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    };
+
+    const request = https.request(options, (response) => {
+      let data = "";
+
+      response.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      response.on("end", () => {
+        console.log("📥 companies:", data);
+        res.send(data);
+      });
     });
+
+    request.on("error", (error) => {
+      console.error("❌ companies error:", error);
+      res.status(500).json({ error: error.message });
+    });
+
+    request.write(JSON.stringify(req.body));
+    request.end();
+
+  } catch (err) {
+    console.error("❌ server error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
